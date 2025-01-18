@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+   
+    <title>Consultar Artistas</title>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Artistas Registrados</h2>
+
+    <!-- Tabla para mostrar los artistas -->
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Cédula</th>
+              
+                <th>Categoría Artística</th>
+                <th>Correo</th>
+                <th>Plan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for artista in artistas %}
+            <tr>
+                <td>
+                    {% if artista.foto_base64 %}
+                      <img src="data:image/jpeg;base64,{{ artista.foto_base64 }}" alt="Foto de perfil" class="img-thumbnail" style="width: 100px; height: 100px;">
+                    {% else %}
+                        Sin foto
+                    {% endif %}
+                </td>
+                <td>{{ artista.nombre }}</td>
+                <td>{{ artista.apellido }}</td>
+                <td>{{ artista.cedula }}</td>
+                
+                <td>{{ artista.categoria }}</td>
+                <td>{{ artista.correo }}</td>
+                <td>{{ artista.categoriaplan }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No hay artistas registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Botón para ir al formulario de registro -->
+    <a href="{% url 'index' %}" class="btn btn-secondary">Inicio</a>
+    <a href="{% url 'registro' %}" class="btn btn-secondary">Registrar Nuevo Artista</a>
+    <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
+</div>
+
+</body>
+</html>
