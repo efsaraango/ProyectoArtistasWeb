@@ -1,69 +1,145 @@
 import base64
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from .models import Artista
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.csrf import csrf_exempt
+from .models import Artista
+from .models import Obra
+
+
 
 # Página de inicio
 def index(request):
-    return render(request, 'paginas/index.html')
+    obras = Obra.objects.all()
+    return render(request, 'paginas/index.html', {'obras': obras})
 
-# Página de inicio de sesión
+# Página detalles de obra
+def detalles_obra(request, id_obra):
+    obra = get_object_or_404(Obra, id_obra=id_obra)
+    artista = obra.id_artista
+    return render(request, 'paginas/detalles_obra.html', {'obra': obra, 'artista': artista})
 
+
+
+
+
+
+# Página de login de sesión
 def login_view(request):
     if request.method == 'POST':
         correo = request.POST.get('correo')
         contraseña = request.POST.get('contraseña')
 
         try:
-            # Buscar el usuario personalizado
             artista = Artista.objects.get(correo=correo)
-            if artista and artista.check_password(contraseña):  # Verifica la contraseña
-                login(request, artista)  # Inicia sesión
-                return redirect('acceso')
+            if not artista.is_approved:
+                return render(request, 'paginas/login.html', {'error': 'Tu cuenta aún no ha sido aprobada.'})
+
+            if artista and artista.check_password(contraseña):
+                login(request, artista)
+                return redirect('index') #
             else:
                 raise ValueError("Credenciales incorrectas")
         except (ObjectDoesNotExist, ValueError):
-            # Si no encuentra al usuario o las credenciales fallan
             return render(request, 'paginas/login.html', {'error': 'Credenciales incorrectas'})
 
-    # Si es GET, muestra el formulario de login
     return render(request, 'paginas/login.html')
 
 
-# Página de acceso después del login
-@login_required
-def acceso(request):
+
+# Página de perfil del usuario
+
+def acceso(request, cedula=None):
+    if cedula:  # Si se pasa la cédula, mostramos el perfil público de ese artista
+        artista = get_object_or_404(Artista, cedula=cedula)
+        es_propio_perfil = (request.user.is_authenticated and request.user.cedula == cedula)
+    else:  # Si no se pasa cédula, asumimos que es el perfil del usuario logueado
+        artista = get_object_or_404(Artista, correo=request.user.correo)
+        es_propio_perfil = True
+
+    obras = artista.artistas_obra.all()
+    
+    return render(request, 'paginas/acceso.html', {
+        'artista': artista,
+        'foto_base64': artista.foto_perfil if artista.foto_perfil else None,
+        'obras': obras,
+        'es_propio_perfil': es_propio_perfil
+    })
+
+
+
+
+# Página de subir obras
+def subir_obras(request):
     usuario = request.user
 
     try:
         artista = Artista.objects.get(correo=usuario.correo)
     except Artista.DoesNotExist:
-        return render(request, 'paginas/acceso.html', {'error': 'Usuario no encontrado.'})
+        return redirect('login')
 
-    if request.method == 'POST':
-        artista.nombre = request.POST.get('nombre')
-        artista.apellido = request.POST.get('apellido')
-        artista.correo = request.POST.get('correo')
+    # Obtener la cantidad de obras actuales
+    obras_actuales = artista.artistas_obra.count()
+    limite_obras = artista.obtener_limite_obras()
 
-        # Manejar la actualización de la imagen
-        if request.FILES.get('foto_perfil'):
-            artista.foto_perfil = base64.b64encode(request.FILES['foto_perfil'].read()).decode('utf-8')
+    # Validar si el usuario ha alcanzado el límite
+    if limite_obras is not None and obras_actuales >= limite_obras:
+        return render(request, 'paginas/subir_obras.html', {
+            'artista': artista,
+            'foto_base64': artista.foto_perfil if artista.foto_perfil else None,
+            'error': f"Has alcanzado el límite de {limite_obras} obras según tu plan.",
+            'limite_obras': limite_obras  # Agregar el límite a la plantilla
+        })
 
-        artista.save()
-        return redirect('acceso')
+    if request.method == 'POST' and 'subir_obra' in request.POST:
+        nombre_obra = request.POST.get('nombre_obra')
+        descripcion = request.POST.get('descripcion')
+        categoria = request.POST.get('categoria')
+        ubicacion = request.POST.get('ubicacion')
+        imagen = request.FILES.get('imagen')
 
-    # Convertir la foto de perfil a base64 para mostrarla
-    foto_base64 = artista.foto_perfil if artista.foto_perfil else None
+        imagen_base64 = None
+        if imagen:
+            imagen_base64 = base64.b64encode(imagen.read()).decode('utf-8')
 
-    return render(request, 'paginas/acceso.html', {
+        Obra.objects.create(
+            nombre_obra=nombre_obra,
+            descripcion=descripcion,
+            categoria=categoria,
+            ubicacion=ubicacion,
+            id_artista=artista,
+            imagen=imagen_base64
+        )
+        return redirect('acceso')  # Redirigir a perfil tras subir obra
+
+    return render(request, 'paginas/subir_obras.html', {
         'artista': artista,
-        'foto_base64': foto_base64,
+        'foto_base64': artista.foto_perfil if artista.foto_perfil else None,
+        'limite_obras': limite_obras  # Asegurar que se pasa a la plantilla
     })
 
+
+
+
+@login_required
+def cambiar_plan(request):
+    usuario = request.user
+
+    try:
+        artista = Artista.objects.get(correo=usuario.correo)
+    except Artista.DoesNotExist:
+        return redirect('login')
+
+    if request.method == 'POST':
+        nuevo_plan = request.POST.get('nuevo_plan')
+        if nuevo_plan in Artista.PLANES_OBRAS:
+            artista.categoriaplan = nuevo_plan
+            artista.save()
+            return redirect('subir_obras')  # Redirige a la página de subir obras después del cambio
+
+    return render(request, 'paginas/cambiar_plan.html', {'artista': artista})
 
 
 
@@ -138,12 +214,6 @@ def mostrar_artistas(request):
     return render(request, 'paginas/mostrar.html', {'artistas': artistas_con_imagenes})
 
 
-# Cerrar sesión
-@login_required
-def logout_view(request):
-    logout(request)
-    return redirect('login')
-
 
 
 
@@ -178,4 +248,13 @@ def edit_perfil(request):
         'artista': artista,
         'foto_base64': foto_base64,
     })
-  
+
+
+
+
+# Cerrar sesión
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+

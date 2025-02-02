@@ -14,6 +14,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'artistas.Artista'
 
+
+
 LOGIN_URL = '/login/'   # Redirige a la página de login si no ha iniciado sesión
 LOGIN_REDIRECT_URL = '/acceso/'  # Redirige al perfil después de un login exitoso
 
@@ -32,6 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

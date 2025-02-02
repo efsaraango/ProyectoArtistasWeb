@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('grappelli/', include('grappelli.urls')),
     path('admin/', admin.site.urls),  # Admin de Django
     path('', include('artistas.urls')),  # Incluye las rutas de la app `artistas`
 ]

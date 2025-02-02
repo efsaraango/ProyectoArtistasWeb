@@ -1,29 +1,105 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil del Usuario</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <header class="bg-primary text-white p-3">
-        <div class="container">
-            <h1 class="h3">Bienvenido, {{ artista.nombre }} {{ artista.apellido }}</h1>
-        </div>
-    </header>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #d1d1d1;
+            font-family: Arial, sans-serif;
+        }
 
-    <div class="container mt-5">
+        .navbar {
+            background-color: #d2b48c;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .btn-iniciar-sesion {
+            background-color: transparent;
+            border: 1px solid #6c757d;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin-left: 10px;
+        }
+
+        .btn-cerrar-sesion{
+            background-color: transparent;
+            border: 1px solid #aa302b;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin-left: 10px;
+        }
+
+        .perfil-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .artista-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 15px;
+            border: 2px solid #000;
+        }
+
+        .artista-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        footer {
+            background-color: #d2b48c;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        footer a {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'index' %}">ARTISTAS WEB</a>
+            <div class="d-flex">
+                <a class="btn btn-iniciar-sesion" href="{% url 'index' %}">Inicio</a>
+                <a class="btn btn-iniciar-sesion" href="{% url 'acceso' %}">Volver a mi perfil</a>
+                <a class="btn btn-cerrar-sesion" href="{% url 'logout' %}">Cerrar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container perfil-container">
         <div class="row">
             <!-- Foto de Perfil -->
             <div class="col-md-4 text-center">
-                {% if foto_base64 %}
-                <img src="data:image/jpeg;base64,{{ foto_base64 }}" alt="Foto de perfil" width="150"  class="img-thumbnail">
-                {% else %}
+                <div class="artista-avatar">
+                    {% if foto_base64 %}
+                    <img src="data:image/jpeg;base64,{{ foto_base64 }}" alt="Foto de perfil">
+                    {% else %}
                     <p>No hay foto de perfil cargada.</p>
-                {% endif %}
-               
+                    {% endif %}
+                </div>
                 <h4 class="mt-3">{{ artista.nombre }} {{ artista.apellido }}</h4>
                 <p>{{ artista.correo }}</p>
             </div>
@@ -47,13 +123,25 @@
                     </div>
                     <div class="mb-3">
                         <label for="foto_perfil" class="form-label">Foto de Perfil</label>
-                        <input type="file" class="form-control" id="foto_perfil" name="foto_perfil" accept="image/*" >
+                        <input type="file" class="form-control" id="foto_perfil" name="foto_perfil" accept="image/*">
                     </div>
                     <button type="submit" class="btn btn-success">Guardar Cambios</button>
-                    <a href="{% url 'index' %}" class="btn btn-danger">Cerrar Sesión</a>
                 </form>
             </div>
         </div>
     </div>
+
+    <footer>
+        <p>&copy; 2024 ARTISTAS WEB. Todos los derechos reservados.</p>
+        <div>
+            <a href="https://www.facebook.com" target="_blank"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.twitter.com" target="_blank"><i class="bi bi-twitter"></i></a>
+            <a href="https://www.instagram.com" target="_blank"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.linkedin.com" target="_blank"><i class="bi bi-linkedin"></i></a>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
